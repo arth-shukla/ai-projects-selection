@@ -37,7 +37,9 @@ function setCommandLineArgs() {
 	for (let i = 0; i < argc; ++i) {
 		let arg = args[i]
 		let parg = args[i - 1]
-		if (parg === "--in_file") {
+        if (['--in_file', '--out_dir', '--rev_per_app', '--rev_names'].includes(arg)) {
+
+        } else if (parg === "--in_file") {
 			inFile = arg
 		} else if (parg === "--out_dir") {
 			outDir = arg
