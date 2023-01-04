@@ -1,17 +1,98 @@
 import fs from 'fs'
+import path from 'path'
+
+const DEFAULT_OUT_DIR = './out'
+
+const ERROR_LOG_COLOR = '\x1b[35m%s\x1b[0m'
+
+const IN_FILE_ERROR = 'ERROR: In file is not valid. Check if the path is valid, and that the file is a .tsv file.'
+const REVIWER_NAMES_ERROR = 'ERROR: Invalid number of reviewer names. Make sure you have at least one reviewer.'
+const REV_PER_APP_ERROR = 'ERROR: Invalid number of reviewers per applicant. Make sure you have enough reviwers to meet your # of reviwers per application.'
+
+var inFile
+var outDir = DEFAULT_OUT_DIR
+var reviewerNames = []
+var reviewersPerApplicant
 
 function main() {
 
-    const filePath = './data/WI23'
-    const reviewerNames = ['Arth', 'Jackie', 'Weiji', 'Vincent']
-    const reviewersPerApplicant = 3
+    if (!setCommandLineArgs())
+        return
 
-    const names = fs.readFileSync(filePath, 'utf8')
+    if (!validateCommandLineArgs())
+        return
+
+    const names = fs.readFileSync(inFile, 'utf8')
     const applicants = parseNamesTSV(names)
-    const reviewers = generateReviewerData(reviewerNames, applicants, reviewersPerApplicant)
+    const reviewers = generateReviewerData(applicants)
     const outputData = generateOutputData(reviewers)
 
-    return outputData
+    writeOutputData(outputData)
+}
+
+function setCommandLineArgs() {
+    let args = process.argv.slice(2)
+	let argc = args.length
+    let revNamesStarted = false
+	for (let i = 0; i < argc; ++i) {
+		let arg = args[i]
+		let parg = args[i - 1]
+		if (parg === "--in_file") {
+			inFile = arg
+		} else if (parg === "--out_dir") {
+			outDir = arg
+		} else if (parg === '--rev_per_app') {
+            reviewersPerApplicant = parseInt(arg)
+        } else if (parg === '--rev_names') {
+            reviewerNames.push(arg)
+            revNamesStarted = true
+        } else if (revNamesStarted) {
+            reviewerNames.push(arg)
+        }
+	}
+	if (
+        argc === 0 || 
+        inFile === undefined ||
+        reviewerNames.length == 0 ||
+        reviewersPerApplicant === 0
+    ) {
+		console.log(
+`Usage: node select.js options [...]
+
+Where options include:
+
+-------------------------------
+Read From .tsv File
+-----------------------------
+--in_file <file>\t\tThe .tsv file to read from. Must be a .tsv file.
+--out_dir <dir>\t\tThe directory to output Reiewer/Applicant data to. Defaults to ./out/.
+--rev_per_app <num>\t\tThe number of reviewers per applicant.
+--rev_names <strings>\t\tA space-delimited list of names of reviewers.
+-----------------------------`
+		)
+		return false
+	}
+
+    return true
+}
+
+function validateCommandLineArgs() {
+
+    // check if input file is valid
+    const isTSV = path.extname(inFile)
+    const fileExists = fs.existsSync(inFile)
+    const isValidFile = isTSV && fileExists
+    if (!isValidFile) console.log(ERROR_LOG_COLOR, IN_FILE_ERROR)
+
+    // check if reviewer names are valid
+    const validReviewerNames = reviewerNames.length > 0
+    if (!validReviewerNames) console.log(ERROR_LOG_COLOR, REVIWER_NAMES_ERROR)
+
+    // check if there are a avlid number of reviwers per applicant
+    const validRevPerApp = reviewersPerApplicant <= reviewerNames.length    
+    if (!validRevPerApp) console.log(ERROR_LOG_COLOR, REV_PER_APP_ERROR)
+
+    return isValidFile && validReviewerNames && validRevPerApp
 }
 
 function parseNamesTSV(names) {
@@ -26,8 +107,7 @@ function parseNamesTSV(names) {
     return applicants
 }
 
-
-function generateReviewerData(reviewerNames, applicants, reviewersPerApplicant) {
+function generateReviewerData(applicants) {
     const reviewers = reviewerNames.reduce((acc, curr) => (acc[curr] = [], acc), {})
     
     for (const email in applicants) {
@@ -42,6 +122,7 @@ function generateReviewerData(reviewerNames, applicants, reviewersPerApplicant) 
 
     return reviewers
 }
+
 function generateOutputData(reviewers) {
     let applicantsPerReviewer = Math.max(...Object.keys(reviewers).map((k, v) => {
         return reviewers[k].length
@@ -60,4 +141,12 @@ function generateOutputData(reviewers) {
     return outputData
 }
 
-console.log(main())
+function writeOutputData(outputData) {
+    if (!fs.existsSync(outDir))
+        fs.mkdirSync(outDir)
+
+    const outFileName = path.basename(inFile, path.extname(inFile)) + '_Assigned_Applicants' + path.extname(inFile)
+    fs.writeFileSync(path.join(outDir, outFileName), outputData)
+}
+
+main()
