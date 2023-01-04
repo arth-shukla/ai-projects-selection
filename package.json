@@ -1,0 +1,16 @@
+{
+  "name": "ai-projects-selection",
+  "version": "1.0.0",
+  "description": "A script to split ACM AI projects applicats such that each applicant is assigned to at least k of n ACM AI Application Reviewers.",
+  "main": "select.js",
+  "type": "module",
+  "scripts": {
+    "test": "node select.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ai-projects-selection"
+  },
+  "author": "Arth Shukla",
+  "license": "ISC"
+}
