@@ -128,3 +128,6 @@ dist
 
 # test files
 test
+
+# MacOS
+.DS_Store

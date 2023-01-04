@@ -4,10 +4,13 @@ import path from 'path'
 const DEFAULT_OUT_DIR = './out'
 
 const ERROR_LOG_COLOR = '\x1b[35m%s\x1b[0m'
+const SUCCESS_LOG_COLOR = '\x1b[36m%s\x1b[0m'
 
 const IN_FILE_ERROR = 'ERROR: In file is not valid. Check if the path is valid, and that the file is a .tsv file.'
 const REVIWER_NAMES_ERROR = 'ERROR: Invalid number of reviewer names. Make sure you have at least one reviewer.'
 const REV_PER_APP_ERROR = 'ERROR: Invalid number of reviewers per applicant. Make sure you have enough reviwers to meet your # of reviwers per application.'
+
+const SUCCESS_MESSAGE = 'Success! Assignments written to\n\t'
 
 var inFile
 var outDir = DEFAULT_OUT_DIR
@@ -25,9 +28,13 @@ function main() {
     const names = fs.readFileSync(inFile, 'utf8')
     const applicants = parseNamesTSV(names)
     const reviewers = generateReviewerData(applicants)
-    const outputData = generateOutputData(reviewers)
+    const outputData = generateOutputData(reviewers, applicants)
 
-    writeOutputData(outputData)
+    const writeTarg = writeOutputData(outputData)
+    if (!writeTarg)
+        return
+    
+    console.log(SUCCESS_LOG_COLOR, SUCCESS_MESSAGE + writeTarg)
 }
 
 function setCommandLineArgs() {
@@ -125,30 +132,39 @@ function generateReviewerData(applicants) {
     return reviewers
 }
 
-function generateOutputData(reviewers) {
+function generateOutputData(reviewers, applicants) {
     let applicantsPerReviewer = Math.max(...Object.keys(reviewers).map((k, v) => {
         return reviewers[k].length
     }))
 
-    let outputData = Object.keys(reviewers).join('\t') + '\n'
+    let outputData = Object.keys(reviewers).join('\t\t\t') + '\n'
     for (let i = 0; i < applicantsPerReviewer; ++i) {
-        let emails = []
+        let applicantData = []
         for (const reviewer in reviewers) {
             let email = reviewers[reviewer][i] ?? ''
-            emails.push(email)
+            applicantData.push(email)
+            applicantData.push(applicants[email].name)
+            applicantData.push(applicants[email].discord)
         }
-        outputData += emails.join('\t') + '\n'
+        outputData += applicantData.join('\t') + '\n'
     }
 
     return outputData
 }
 
 function writeOutputData(outputData) {
-    if (!fs.existsSync(outDir))
-        fs.mkdirSync(outDir)
+    try {
+        if (!fs.existsSync(outDir))
+            fs.mkdirSync(outDir)
 
-    const outFileName = path.basename(inFile, path.extname(inFile)) + '_Assigned_Applicants' + path.extname(inFile)
-    fs.writeFileSync(path.join(outDir, outFileName), outputData)
+        const outFileName = path.basename(inFile, path.extname(inFile)) + '_Assigned_Applicants' + path.extname(inFile)
+        const writeTarg = path.join(outDir, outFileName)
+        fs.writeFileSync(writeTarg, outputData)
+
+        return writeTarg
+    } catch (e) {
+        return 
+    }
 }
 
 main()
