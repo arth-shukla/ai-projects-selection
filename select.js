@@ -141,10 +141,12 @@ function generateOutputData(reviewers, applicants) {
     for (let i = 0; i < applicantsPerReviewer; ++i) {
         let applicantData = []
         for (const reviewer in reviewers) {
-            let email = reviewers[reviewer][i] ?? ''
-            applicantData.push(email)
-            applicantData.push(applicants[email].name)
-            applicantData.push(applicants[email].discord)
+            let email = reviewers[reviewer][i]
+            if (email) {
+                applicantData.push(email)
+                applicantData.push(applicants[email].name)
+                applicantData.push(applicants[email].discord)
+            }
         }
         outputData += applicantData.join('\t') + '\n'
     }
