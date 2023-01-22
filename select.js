@@ -74,7 +74,7 @@ Where options include:
 Read From .tsv File
 -----------------------------
 --in_file <file>\t\tThe .tsv file to read from. Must be a .tsv file.
---out_dir <dir>\t\tThe directory to output Reiewer/Applicant data to. Defaults to ./out/.
+--out_dir <dir>\t\t\tThe directory to output Reiewer/Applicant data to. Defaults to ./out/.
 --rev_per_app <num>\t\tThe number of reviewers per applicant.
 --rev_names <strings>\t\tA space-delimited list of names of reviewers.
 -----------------------------`
@@ -132,6 +132,13 @@ function generateReviewerData(applicants) {
     return reviewers
 }
 
+function clean(str) {
+
+    str = str.replace('\r', '').replace('\n', '')
+
+    return str
+}
+
 function generateOutputData(reviewers, applicants) {
     let applicantsPerReviewer = Math.max(...Object.keys(reviewers).map((k, v) => {
         return reviewers[k].length
@@ -143,9 +150,9 @@ function generateOutputData(reviewers, applicants) {
         for (const reviewer in reviewers) {
             let email = reviewers[reviewer][i]
             if (email) {
-                applicantData.push(email)
-                applicantData.push(applicants[email].name)
-                applicantData.push(applicants[email].discord)
+                applicantData.push(clean(email))
+                applicantData.push(clean(applicants[email].name))
+                applicantData.push(clean(applicants[email].discord))
             }
         }
         outputData += applicantData.join('\t') + '\n'
