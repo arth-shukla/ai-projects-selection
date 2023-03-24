@@ -38,3 +38,7 @@ Optionally, one can set the output directory. Let's say we want to output direct
 ```
 node select.js --in_file ./files/applicant_names.tsv --rev_per_app 3 --rev_names name1 name2 name3 name4 name5 --out_dir ./output_files
 ```
+
+# About Me
+
+Arth Shukla [Site](https://arth.website) | [GitHub](https://github.com/arth-shukla) | [LinkedIn](https://www.linkedin.com/in/arth-shukla/)
